@@ -1,0 +1,14 @@
+{
+  "name": "@fea-lib/values",
+  "version": "1.0.0",
+  "description": "Typed, unit-aware scalar value objects with arithmetic and conversion. Zero dependencies.",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}
