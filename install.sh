@@ -23,7 +23,7 @@ INSTALL_PATH="$TARGET_DIR/$NAME"
 echo "Installing $NAME into $INSTALL_PATH ..."
 
 # Clone repo into target (shallow, no history)
-REPO_URL="https://github.com/fea-lib/values"
+REPO_URL="git@github.com:fea-lib/values.git"
 TMP=$(mktemp -d)
 git clone --depth=1 "$REPO_URL" "$TMP/repo" --quiet
 mkdir -p "$INSTALL_PATH"
