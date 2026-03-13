@@ -17,11 +17,20 @@ Every value is a plain object `{ value: number; unit: string }` with five method
 
 ## Install
 
+This is a **copy-paste library** — you own the source. No npm publish.
+
 ```bash
-./install.sh ./src/libs
+# Install into src/libs/ (adjust path as needed)
+curl -fsSL https://github.com/fea-lib/values/raw/main/install.sh | bash -s src/libs
 ```
 
-This copies the source files into `./src/libs/@fea-lib/values/`. No npm publish needed.
+Or run the bundled script directly if you already have a local clone:
+
+```bash
+./install.sh src/libs
+```
+
+This copies the source into `src/libs/@fea-lib/values/`.
 
 ## Add to tsconfig.json
 
