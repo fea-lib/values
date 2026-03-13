@@ -77,14 +77,18 @@ function _toDeg(value: Degrees | Radians): Degrees {
 
 export function deg(n: number): Degrees;
 export function deg(v: Radians): Degrees;
-export function deg(a: number | Radians): Degrees {
+export function deg(v: Degrees): Degrees;
+export function deg(v: Degrees | Radians): Degrees;
+export function deg(a: number | Radians | Degrees): Degrees {
   if (typeof a === "number") return _deg(a);
   return _toDeg(a);
 }
 
 export function rad(n: number): Radians;
 export function rad(v: Degrees): Radians;
-export function rad(a: number | Degrees): Radians {
+export function rad(v: Radians): Radians;
+export function rad(v: Degrees | Radians): Radians;
+export function rad(a: number | Degrees | Radians): Radians {
   if (typeof a === "number") return _rad(a);
   return _toRad(a);
 }

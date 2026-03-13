@@ -16,6 +16,20 @@
 
 export type RawOther = { value: number; unit: string } | number;
 
+/** Shape of every tagged measure value returned by `measure()`. */
+// The methods use a recursive-ish self-reference via the raw shape to avoid
+// circular type issues while still allowing chaining (e.g. value.as("mm").as("cm")).
+export type MeasureValue<U extends string> = {
+  readonly value: number;
+  readonly unit: U;
+  toString(): string;
+  as(targetUnit: string): MeasureValue<string>;
+  add(other: { value: number; unit: string } | number): MeasureValue<string>;
+  sub(other: { value: number; unit: string } | number): MeasureValue<string>;
+  mul(factor: number): MeasureValue<string>;
+  div(divisor: number): MeasureValue<string>;
+};
+
 // Dispatch hooks — stored in a mutable container so category files can
 // overwrite the default implementations after importing this module.
 // (ESM `export let` creates read-only live bindings for importers, so we
@@ -24,23 +38,23 @@ export const hooks: {
   _asImpl: (
     self: { value: number; unit: string },
     targetUnit: string,
-  ) => { value: number; unit: string };
+  ) => MeasureValue<string>;
   _addImpl: (
     a: { value: number; unit: string },
     b: RawOther,
-  ) => { value: number; unit: string };
+  ) => MeasureValue<string>;
   _subImpl: (
     a: { value: number; unit: string },
     b: RawOther,
-  ) => { value: number; unit: string };
+  ) => MeasureValue<string>;
   _mulImpl: (
     a: { value: number; unit: string },
     factor: number,
-  ) => { value: number; unit: string };
+  ) => MeasureValue<string>;
   _divImpl: (
     a: { value: number; unit: string },
     divisor: number,
-  ) => { value: number; unit: string };
+  ) => MeasureValue<string>;
 } = {
   _asImpl: () => { throw new Error("_asImpl not yet initialised"); },
   _addImpl: () => { throw new Error("_addImpl not yet initialised"); },
@@ -48,19 +62,6 @@ export const hooks: {
   _mulImpl: () => { throw new Error("_mulImpl not yet initialised"); },
   _divImpl: () => { throw new Error("_divImpl not yet initialised"); },
 };
-
-// Re-export as individual lets for backwards-compat with any code that
-// reads them (reads go through the hooks object reference at call-time).
-export const _asImpl = (...args: Parameters<typeof hooks._asImpl>) =>
-  hooks._asImpl(...args);
-export const _addImpl = (...args: Parameters<typeof hooks._addImpl>) =>
-  hooks._addImpl(...args);
-export const _subImpl = (...args: Parameters<typeof hooks._subImpl>) =>
-  hooks._subImpl(...args);
-export const _mulImpl = (...args: Parameters<typeof hooks._mulImpl>) =>
-  hooks._mulImpl(...args);
-export const _divImpl = (...args: Parameters<typeof hooks._divImpl>) =>
-  hooks._divImpl(...args);
 
 /**
  * Internal factory. Each category file calls this to produce its constructors.
@@ -73,27 +74,27 @@ export const _divImpl = (...args: Parameters<typeof hooks._divImpl>) =>
  */
 export const measure =
   <U extends string>(unit: U, unitToPrint?: string) =>
-  (value: number) => {
+  (value: number): MeasureValue<U> => {
     const display = unitToPrint ?? unit;
-    const self = {
+    const self: MeasureValue<U> = {
       value,
       unit,
       toString: () => `${value}${display}`,
-      as<V extends string>(targetUnit: V) {
-        return hooks._asImpl(self as never, targetUnit as never) as never;
+      as(targetUnit: string) {
+        return hooks._asImpl(self as { value: number; unit: string }, targetUnit);
       },
       add(other: { value: number; unit: string } | number) {
-        return hooks._addImpl(self as never, other as never) as never;
+        return hooks._addImpl(self as { value: number; unit: string }, other);
       },
       sub(other: { value: number; unit: string } | number) {
-        return hooks._subImpl(self as never, other as never) as never;
+        return hooks._subImpl(self as { value: number; unit: string }, other);
       },
       mul(factor: number) {
-        return hooks._mulImpl(self as never, factor) as never;
+        return hooks._mulImpl(self as { value: number; unit: string }, factor);
       },
       div(divisor: number) {
-        return hooks._divImpl(self as never, divisor) as never;
+        return hooks._divImpl(self as { value: number; unit: string }, divisor);
       },
     };
-    return self as never;
+    return self;
   };
