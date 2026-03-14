@@ -30,8 +30,32 @@ describe("unit constructors", () => {
 
 describe("toString()", () => {
   it("deg uses '°' display", () => expect(deg(90).toString()).toBe("90°"));
-  it("rad uses ' rad' display", () => expect(rad(Math.PI).toString()).toBe(`${Math.PI} rad`));
+  it("rad uses ' rad' display", () => expect(rad(Math.PI).toString()).toBe("3.14 rad"));
   it("deg(0) toString", () => expect(deg(0).toString()).toBe("0°"));
+});
+
+// ---------------------------------------------------------------------------
+// toString() — digitsAfterDecimal rounding
+// ---------------------------------------------------------------------------
+
+describe("toString() — digitsAfterDecimal rounding", () => {
+  it("rad(Math.PI) rounds to 2 decimal places by default", () => {
+    expect(rad(Math.PI).toString()).toBe("3.14 rad");
+  });
+
+  it("deg(90.1234) rounds to 2 decimal places", () => {
+    expect(deg(90.1234).toString()).toBe("90.12°");
+  });
+
+  it("deg(90.005) rounds up at 3rd decimal", () => {
+    // 90.005 * 100 = 9000.5, rounds to 9001, / 100 = 90.01
+    expect(deg(90.005).toString()).toBe("90.01°");
+  });
+
+  it("integer values display without trailing decimals", () => {
+    expect(deg(90).toString()).toBe("90°");
+    expect(rad(1).toString()).toBe("1 rad");
+  });
 });
 
 // ---------------------------------------------------------------------------

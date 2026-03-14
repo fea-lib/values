@@ -56,11 +56,21 @@ export const hooks: {
     divisor: number,
   ) => MeasureValue<string>;
 } = {
-  _asImpl: () => { throw new Error("_asImpl not yet initialised"); },
-  _addImpl: () => { throw new Error("_addImpl not yet initialised"); },
-  _subImpl: () => { throw new Error("_subImpl not yet initialised"); },
-  _mulImpl: () => { throw new Error("_mulImpl not yet initialised"); },
-  _divImpl: () => { throw new Error("_divImpl not yet initialised"); },
+  _asImpl: () => {
+    throw new Error("_asImpl not yet initialised");
+  },
+  _addImpl: () => {
+    throw new Error("_addImpl not yet initialised");
+  },
+  _subImpl: () => {
+    throw new Error("_subImpl not yet initialised");
+  },
+  _mulImpl: () => {
+    throw new Error("_mulImpl not yet initialised");
+  },
+  _divImpl: () => {
+    throw new Error("_divImpl not yet initialised");
+  },
 };
 
 /**
@@ -71,17 +81,27 @@ export const hooks: {
  *                       When omitted, `unit` is used as-is.
  *                       Include leading space if desired, e.g. " mm", " ft".
  *                       For symbols with no space use the symbol directly, e.g. "°", '"'.
+ * @param digitsAfterDecimal - optional number of digits to display after the decimal point.
+ *                            If set to `false`, the value is displayed as-is without rounding.
  */
 export const measure =
-  <U extends string>(unit: U, unitToPrint?: string) =>
+  <U extends string>(
+    unit: U,
+    unitToPrint?: string,
+    digitsAfterDecimal: number | false = 2,
+  ) =>
   (value: number): MeasureValue<U> => {
     const display = unitToPrint ?? unit;
     const self: MeasureValue<U> = {
       value,
       unit,
-      toString: () => `${value}${display}`,
+      toString: () =>
+        `${digitsAfterDecimal !== false ? Math.round(value * Math.pow(10, digitsAfterDecimal)) / Math.pow(10, digitsAfterDecimal) : value}${display}`,
       as(targetUnit: string) {
-        return hooks._asImpl(self as { value: number; unit: string }, targetUnit);
+        return hooks._asImpl(
+          self as { value: number; unit: string },
+          targetUnit,
+        );
       },
       add(other: { value: number; unit: string } | number) {
         return hooks._addImpl(self as { value: number; unit: string }, other);

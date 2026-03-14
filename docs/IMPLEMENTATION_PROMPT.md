@@ -167,83 +167,82 @@ consumers directly — all public exports come through the category files.
 
 export type RawOther = { value: number; unit: string } | number;
 
-// Dispatch hooks — filled in by each category file after its converters are defined.
-// Each hook is a module-level let so category files can overwrite the default.
-export let _asImpl: (
-  self: { value: number; unit: string },
-  targetUnit: string,
-) => { value: number; unit: string } = () => {
-  throw new Error("_asImpl not yet initialised");
+/** Shape of every tagged measure value returned by `measure()`. */
+export type MeasureValue<U extends string> = {
+  readonly value: number;
+  readonly unit: U;
+  toString(): string;
+  as(targetUnit: string): MeasureValue<string>;
+  add(other: { value: number; unit: string } | number): MeasureValue<string>;
+  sub(other: { value: number; unit: string } | number): MeasureValue<string>;
+  mul(factor: number): MeasureValue<string>;
+  div(divisor: number): MeasureValue<string>;
 };
 
-export let _addImpl: (
-  a: { value: number; unit: string },
-  b: RawOther,
-) => { value: number; unit: string } = () => {
-  throw new Error("_addImpl not yet initialised");
-};
-
-export let _subImpl: (
-  a: { value: number; unit: string },
-  b: RawOther,
-) => { value: number; unit: string } = () => {
-  throw new Error("_subImpl not yet initialised");
-};
-
-export let _mulImpl: (
-  a: { value: number; unit: string },
-  factor: number,
-) => { value: number; unit: string } = () => {
-  throw new Error("_mulImpl not yet initialised");
-};
-
-export let _divImpl: (
-  a: { value: number; unit: string },
-  divisor: number,
-) => { value: number; unit: string } = () => {
-  throw new Error("_divImpl not yet initialised");
+// Dispatch hooks — stored in a mutable container so category files can
+// overwrite the default implementations after importing this module.
+export const hooks: {
+  _asImpl: (self: { value: number; unit: string }, targetUnit: string) => MeasureValue<string>;
+  _addImpl: (a: { value: number; unit: string }, b: RawOther) => MeasureValue<string>;
+  _subImpl: (a: { value: number; unit: string }, b: RawOther) => MeasureValue<string>;
+  _mulImpl: (a: { value: number; unit: string }, factor: number) => MeasureValue<string>;
+  _divImpl: (a: { value: number; unit: string }, divisor: number) => MeasureValue<string>;
+} = {
+  _asImpl:  () => { throw new Error("_asImpl not yet initialised"); },
+  _addImpl: () => { throw new Error("_addImpl not yet initialised"); },
+  _subImpl: () => { throw new Error("_subImpl not yet initialised"); },
+  _mulImpl: () => { throw new Error("_mulImpl not yet initialised"); },
+  _divImpl: () => { throw new Error("_divImpl not yet initialised"); },
 };
 
 /**
  * Internal factory. Each category file calls this to produce its constructors.
  *
- * @param unit         - canonical unit key, e.g. "mm", "inch", "deg", "EUR", "m2", "cm3"
- * @param unitToPrint  - optional display string used in toString().
- *                       When omitted, `unit` is used as-is.
- *                       Include leading space if desired, e.g. " mm", " ft".
- *                       For symbols with no space use the symbol directly, e.g. "°", '"'.
+ * @param unit               - canonical unit key, e.g. "mm", "inch", "deg", "EUR", "m2", "cm3"
+ * @param unitToPrint        - optional display string used in toString().
+ *                             When omitted, `unit` is used as-is.
+ *                             Include leading space if desired, e.g. " mm", " ft".
+ *                             For symbols with no space use the symbol directly, e.g. "°", '"'.
+ * @param digitsAfterDecimal - optional number of digits to display after the decimal point
+ *                             (default `2`). Pass `false` to display the raw value without
+ *                             rounding.
  */
 export const measure =
-  <U extends string>(unit: U, unitToPrint?: string) =>
-  (value: number) => {
+  <U extends string>(
+    unit: U,
+    unitToPrint?: string,
+    digitsAfterDecimal: number | false = 2,
+  ) =>
+  (value: number): MeasureValue<U> => {
     const display = unitToPrint ?? unit;
-    const self = {
+    const self: MeasureValue<U> = {
       value,
       unit,
-      toString: () => `${value}${display}`,
-      as<V extends string>(targetUnit: V) {
-        return _asImpl(self as never, targetUnit as never) as never;
+      toString: () =>
+        `${digitsAfterDecimal !== false ? Math.round(value * Math.pow(10, digitsAfterDecimal)) / Math.pow(10, digitsAfterDecimal) : value}${display}`,
+      as(targetUnit: string) {
+        return hooks._asImpl(self as { value: number; unit: string }, targetUnit);
       },
       add(other: { value: number; unit: string } | number) {
-        return _addImpl(self as never, other as never) as never;
+        return hooks._addImpl(self as { value: number; unit: string }, other);
       },
       sub(other: { value: number; unit: string } | number) {
-        return _subImpl(self as never, other as never) as never;
+        return hooks._subImpl(self as { value: number; unit: string }, other);
       },
       mul(factor: number) {
-        return _mulImpl(self as never, factor) as never;
+        return hooks._mulImpl(self as { value: number; unit: string }, factor);
       },
       div(divisor: number) {
-        return _divImpl(self as never, divisor) as never;
+        return hooks._divImpl(self as { value: number; unit: string }, divisor);
       },
     };
-    return self as never;
+    return self;
   };
 ```
 
-**Key design point:** `unit` stores only the clean identifier (e.g. `"mm"`, not
-`" mm"`). All `switch` statements in converter functions use these clean keys.
-`unitToPrint` is purely for `toString()` and is never stored on the object.
+**Key design points:**
+- `unit` stores only the clean identifier (e.g. `"mm"`, not `" mm"`). All `switch` statements in converter functions use these clean keys. `unitToPrint` is purely for `toString()` and is never stored on the object.
+- `digitsAfterDecimal` controls rounding in `toString()`. The default is `2`. Pass `false` to display the full raw value without rounding.
 
 ---
 

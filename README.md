@@ -155,3 +155,4 @@ isMeasure(eur(10)); // true — any category
 - **Hooks pattern.** `core.ts` exposes a `hooks` object. Each category file overwrites the relevant hook so the base `.add/.sub/.mul/.div/.as` methods dispatch correctly even before `index.ts` is imported. `index.ts` replaces all hooks with a composed multi-category implementation.
 - **Anchor-based conversion.** Each category has a single anchor unit (length → mm, angle → rad, area → m², volume → m³). All conversions go through the anchor to keep the conversion table small.
 - **Clean unit keys.** Internal `unit` strings are plain identifiers (`"mm"`, `"inch"`, `"deg"`, `"cm3"`). Display strings (with spaces and symbols) live only in `toString()`.
+- **`digitsAfterDecimal`.** The `measure()` factory accepts an optional third parameter `digitsAfterDecimal: number | false` (default `2`). When a number, `toString()` rounds to that many decimal places. Pass `false` to display the raw value without rounding.
